@@ -1,5 +1,6 @@
 import pytest
-from sketchlinalg.sketchlinalg.sketches.count_sketch import *
+from sketches.count_sketch import *
+
 
 # BASIC TESTS
 def test_does_not_modify_inputs():
@@ -92,3 +93,6 @@ def test_fixed_S_linearity_in_B():
     left = (S @ A).T @ S @ (B1 + B2)
     right = (S @ A).T @ (S @ B1) + (S @ A).T @ (S @ B2)
     np.testing.assert_allclose(left, right, rtol=1e-12, atol=1e-12)
+
+
+# COUNT SKETCH SPECIFIC TESTS

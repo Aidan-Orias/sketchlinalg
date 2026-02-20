@@ -1,5 +1,5 @@
 import pytest
-from sketchlinalg.sketchlinalg.sketches.gaussian_sketch import *
+
 
 # BASIC TESTS
 def test_does_not_modify_inputs():
