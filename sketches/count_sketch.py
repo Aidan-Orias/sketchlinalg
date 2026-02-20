@@ -48,13 +48,12 @@ def count_sketch_apply(A: np.ndarray,  d: int, seed: int | None = None) -> np.nd
     n, m = A.shape
 
     SA = np.zeros((d ,m))
-    h = rng.integers(0, d, size=n)
-    s = rng.choice([-1, 1], size=n)
+    h, s = make_hash_sign(rng, d, n)
     np.add.at(SA, h, A * s[:, None])
     return SA
 
 
-def count_sketch_sparse(X: sparse.spmatrix, d: int, seed: int | None = None) -> sparse.csr_matrix:
+def count_sketch_sparse(X: sparse.spmatrix, d: int, hash) -> sparse.csr_matrix:
     """
         Sparse matrix count sketch approximate of A without constructing S. We start by changing X
         to COO format to more efficiently build the sketch. We then convert the sketched matrix
@@ -64,23 +63,21 @@ def count_sketch_sparse(X: sparse.spmatrix, d: int, seed: int | None = None) -> 
         d: Sketch dimension (d << n)
         seed: Random seed for reproducibility
     """
-    X = X.tocoo(copy=False)
-    n = X.shape[0]
+    if not sparse.isspmatrix_coo(X):
+        X = X.tocoo(copy=False)
 
-    rng = np.random.default_rng(seed)
-    h = rng.integers(0, d, size=n)
-    s = rng.choice(np.array([-1.0, 1.0]), size=n)
-
+    h, s = hash
     new_rows = h[X.row]
     new_data = X.data * s[X.row]
 
     SX = sparse.coo_matrix((new_data, (new_rows, X.col)), shape=(d, X.shape[1])).tocsr()
-    SX.sum_duplicates()
     return SX
 
-def count_sketch_dense_vector(y: np.ndarray, d: int, seed: int | None = None) -> np.ndarray:
-    rng = np.random.default_rng(seed)
-    n = y.shape[0]
-    h = rng.integers(0, d, size=n)
-    s = rng.choice([-1.0, 1.0], size=n)
+def count_sketch_dense_vector(y: np.ndarray, d: int, hash) -> np.ndarray:
+    h, s = hash
     return np.bincount(h, weights=s * y, minlength=d)
+
+def make_hash_sign(rng, d, n):
+    h = rng.integers(0, d, n)
+    s = rng.choice([-1.0, 1.0], n)
+    return h, s
