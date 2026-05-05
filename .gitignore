@@ -1,6 +1,23 @@
 # data files (local only)
-data/
+solvers/data/
 data/raw/
 data/processed/
+solvers/data/processed/
 *.bz2
 *.gz
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Local environments and editor files
+.venv/
+.DS_Store
+.idea/
+
+# Local benchmark data
+src/sketchlinalg/solvers/data/
+**/data/processed/
+**/data/raw/

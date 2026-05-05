@@ -1,5 +1,14 @@
 import pytest
-from sketches.count_sketch import *
+import numpy as np
+
+from sketchlinalg.sketches.count_sketch import (
+    count_sketch_apply,
+    count_sketch_dense_vector,
+    count_sketch_matrix,
+    count_sketch_multiplication,
+    count_sketch_sparse,
+    make_hash_sign,
+)
 
 
 # BASIC TESTS
@@ -96,3 +105,28 @@ def test_fixed_S_linearity_in_B():
 
 
 # COUNT SKETCH SPECIFIC TESTS
+
+
+def test_rejects_mismatched_row_counts():
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((10, 2))
+    B = rng.standard_normal((9, 2))
+
+    with pytest.raises(ValueError, match="same number of rows"):
+        count_sketch_multiplication(A, B, d=4, seed=0)
+
+
+def test_rejects_invalid_sketch_dimension():
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((10, 2))
+
+    with pytest.raises(ValueError, match="positive"):
+        count_sketch_apply(A, d=0, seed=0)
+
+
+def test_rejects_hash_with_wrong_length():
+    y = np.ones(5)
+    hash_sign = (np.arange(4), np.ones(4))
+
+    with pytest.raises(ValueError, match="length"):
+        count_sketch_dense_vector(y, d=5, hash=hash_sign)

@@ -15,11 +15,20 @@ dependencies = [
   "scipy",
   "scikit-learn",
   "matplotlib",
-  "pytest",
 ]
 
 [tool.setuptools]
-packages = ["sketchlinalg", "sketchlinalg.sketches", "sketchlinalg.solvers", "sketchlinalg.utils", "sketchlinalg.benchmarks"]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
+markers = [
+  "slow: statistical checks that take longer than the basic test suite",
+]

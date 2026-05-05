@@ -1,13 +1,19 @@
 from pathlib import Path
 import bz2
+import sys
 import numpy as np
 from sklearn.datasets import load_svmlight_file
-from sketches.count_sketch import *
-from benchmarks.count_sketch_benchmarks import *
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+SRC_ROOT = PROJECT_ROOT / "src"
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
+
+from sketchlinalg.benchmarks.count_sketch_benchmarks import benchmark
 from scipy import sparse
 
-RAW_DIR = Path("data/raw")
-CACHE_DIR = Path("data/processed")
+RAW_DIR = PROJECT_ROOT / "data" / "raw"
+CACHE_DIR = PROJECT_ROOT / "data" / "processed"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 def load_or_cache(name: str, *, n_features: int | None = None, force_recache: bool = False):
@@ -47,4 +53,3 @@ results = benchmark(X_train_coo, y_train, X_test, y_test, sketch_dims, alphas, r
 
 for result in results:
     print(result)
-

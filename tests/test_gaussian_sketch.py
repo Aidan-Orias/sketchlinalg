@@ -1,4 +1,7 @@
+import numpy as np
 import pytest
+
+from sketchlinalg.sketches.gaussian_sketch import gaussian_sketch_multiplication, gaussian_sketch_matrix
 
 
 # BASIC TESTS
@@ -90,4 +93,17 @@ def test_fixed_S_linearity_in_B():
     right = (S @ A).T @ (S @ B1) + (S @ A).T @ (S @ B2)
     np.testing.assert_allclose(left, right, rtol=1e-12, atol=1e-12)
 
+
+def test_rejects_mismatched_row_counts():
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((10, 2))
+    B = rng.standard_normal((9, 2))
+
+    with pytest.raises(ValueError, match="same number of rows"):
+        gaussian_sketch_multiplication(A, B, d=4, seed=0)
+
+
+def test_rejects_invalid_sketch_dimension():
+    with pytest.raises(ValueError, match="positive"):
+        gaussian_sketch_matrix(n=10, d=0, seed=0)
 
