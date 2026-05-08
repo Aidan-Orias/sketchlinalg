@@ -21,9 +21,18 @@ src/sketchlinalg/
     count_sketch_benchmarks.py
                           Ridge regression benchmark utilities for sketched sparse data
 
+  api/
+    app.py                FastAPI app for the benchmark dashboard
+    jobs.py               In-memory benchmark jobs and WebSocket progress streaming
+
+  datasets.py             E2006 loading, caching, and summary helpers
+
   solvers/
     linear_ridge_regression.py
                           Example script for loading E2006 data and benchmarking ridge fits
+
+frontend/
+  src/                    React + Vite + TypeScript benchmark interface
 
 tests/
   test_count_sketch.py
@@ -153,6 +162,34 @@ python src/sketchlinalg/solvers/linear_ridge_regression.py
 ```
 
 The script caches parsed sparse matrices and targets under `data/processed`, then reports timing and RMSE ratios for several sketch dimensions and ridge penalties.
+
+## Interactive Dashboard
+
+The dashboard uses a React/Vite frontend and a FastAPI backend. It presents the CountSketch math and E2006 dataset summary on the left, with benchmark controls, progress bars, and runtime breakdowns on the right.
+
+Install the Python dependencies first:
+
+```bash
+python -m pip install -e ".[dev]"
+```
+
+Start the API from the repository root:
+
+```bash
+uvicorn sketchlinalg.api.app:app --reload
+```
+
+Start the frontend in a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Then open the Vite URL, normally `http://127.0.0.1:5173`.
+
+The frontend sends benchmark requests to `http://localhost:8000` by default. Set `VITE_API_BASE_URL` if the API runs somewhere else.
 
 ## Notes
 

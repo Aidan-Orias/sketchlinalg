@@ -1,8 +1,5 @@
 from pathlib import Path
-import bz2
 import sys
-import numpy as np
-from sklearn.datasets import load_svmlight_file
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 SRC_ROOT = PROJECT_ROOT / "src"
@@ -10,46 +7,37 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from sketchlinalg.benchmarks.count_sketch_benchmarks import benchmark
-from scipy import sparse
+from sketchlinalg.datasets import load_e2006, recache_e2006
 
-RAW_DIR = PROJECT_ROOT / "data" / "raw"
-CACHE_DIR = PROJECT_ROOT / "data" / "processed"
-CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-def load_or_cache(name: str, *, n_features: int | None = None, force_recache: bool = False):
-    bz2_path = RAW_DIR / f"{name}.bz2"
-    X_path = CACHE_DIR / f"{name}.X.npz"
-    y_path = CACHE_DIR / f"{name}.y.npy"
+def run_e2006_benchmark(
+        sketch_dims: list[int] | None = None,
+        alphas: list[float] | None = None,
+        *,
+        repeats: int = 3,
+        seed: int = 127,
+        force_recache: bool = False,
+) -> list[dict]:
+    dataset = recache_e2006() if force_recache else load_e2006()
+    sketch_dims = sketch_dims or [5000, 20000, 50000]
+    alphas = alphas or [1e-6, 1.0, 5.0]
 
-    if force_recache:
-        X_path.unlink(missing_ok=True)
-        y_path.unlink(missing_ok=True)
+    return benchmark(
+        dataset.train.X,
+        dataset.train.y,
+        dataset.test.X,
+        dataset.test.y,
+        sketch_dims,
+        alphas,
+        repeats=repeats,
+        seed=seed,
+    )
 
-    if X_path.exists() and y_path.exists():
-        X = sparse.load_npz(X_path)
-        y = np.load(y_path)
-        return X, y
 
-    with bz2.open(bz2_path, "rb") as f:
-        if n_features is None:
-            X, y = load_svmlight_file(f)
-        else:
-            X, y = load_svmlight_file(f, n_features=n_features)
+def main() -> None:
+    for result in run_e2006_benchmark(force_recache=True):
+        print(result)
 
-    sparse.save_npz(X_path, X)
-    np.save(y_path, y)
-    return X, y
 
-# Force recache, and make test match train feature dimension
-X_train, y_train = load_or_cache("E2006.train", force_recache=True)
-X_test, y_test   = load_or_cache("E2006.test", n_features=X_train.shape[1], force_recache=True)
-
-sketch_dims = [5000, 20000, 50000]
-alphas = [1e-6, 1.0, 5.0]
-
-X_train_coo = X_train.tocoo()
-
-results = benchmark(X_train_coo, y_train, X_test, y_test, sketch_dims, alphas, repeats=3, seed=127)
-
-for result in results:
-    print(result)
+if __name__ == "__main__":
+    main()

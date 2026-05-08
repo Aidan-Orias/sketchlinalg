@@ -1,4 +1,5 @@
 import time
+from collections.abc import Callable
 import numpy as np
 from scipy import sparse
 from sklearn.linear_model import Ridge
@@ -35,16 +36,28 @@ def make_ridge_estimator(alpha: float) -> Ridge:
     return Ridge(alpha=alpha, fit_intercept=True, solver="lsqr")
 
 
-def time_fit(estimator_factory, X: sparse.csr_matrix, y: np.ndarray, repeats: int = 7):
+FitProgressCallback = Callable[[int, int, float], None]
+
+
+def time_fit(
+        estimator_factory,
+        X: sparse.csr_matrix,
+        y: np.ndarray,
+        repeats: int = 7,
+        progress_callback: FitProgressCallback | None = None,
+):
     _validate_repeats(repeats)
     times = []
 
-    for _ in range(repeats):
+    for repeat_index in range(repeats):
         est = estimator_factory()
         t0 = time.perf_counter()
         est.fit(X, y)
         t1 = time.perf_counter()
-        times.append(t1 - t0)
+        elapsed = t1 - t0
+        times.append(elapsed)
+        if progress_callback is not None:
+            progress_callback(repeat_index + 1, repeats, elapsed)
 
     return float(np.median(times)), est
 
@@ -53,9 +66,19 @@ def root_mean_squared_error(estimator, X_test, y_test) -> float:
     return float(np.sqrt(mse(y_test, estimator.predict(X_test))))
 
 
-def fit_baseline(X_train, y_train, X_test, y_test, alpha: float, repeats: int = 7) -> tuple[float, float]:
+def fit_baseline(
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+        alpha: float,
+        repeats: int = 7,
+        progress_callback: FitProgressCallback | None = None,
+) -> tuple[float, float]:
     estimator_factory = lambda: make_ridge_estimator(alpha)
-    fit_time, estimator = time_fit(estimator_factory, X_train, y_train, repeats)
+    fit_time, estimator = time_fit(
+        estimator_factory, X_train, y_train, repeats, progress_callback
+    )
     rmse = root_mean_squared_error(estimator, X_test, y_test)
     return fit_time, rmse
 
